@@ -1,0 +1,5 @@
+name = "party-tracker"
+compatibility_date = "2026-11-21"
+
+[assets]
+directory = "./public"
