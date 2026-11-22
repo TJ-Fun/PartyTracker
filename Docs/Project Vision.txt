@@ -1,0 +1,165 @@
+Party Tracker - Complete Application Documentation
+
+1. Brief App Overview
+This is a personal live music memory logger and event diary designed to capture concerts, festivals, and live show experiences. Modeled closely after the core concepts and profile structure of Concert Archives, the application acts as a personal vault where users maintain their attendance history. The defining principle of the platform is complete user freedom: while the application provides intelligent auto-complete suggestions for artists, venues, and events pulled from public music databases and an internal crowd-sourced repository, the user always retains 100 percent control to save custom free-text inputs without being forced to match a rigid global database entity.
+
+The product ecosystem consists of a primary web application and a companion Android application. It incorporates a two-tier social model distinguishing between casual followers and mutually confirmed friends, direct messaging with strict anti-abuse protections, an administrative control panel with temporary appeal access, a band identification system that enriches raw text entries with relational metadata and cross-reference discovery filters, comprehensive profile tab navigation (Overview, Concerts, Bands, Venues, Locations, Years), and a specialized Concert Detail view featuring full Event Lineups, personal Bands Seen tracking, Concert Details, and aggregated Genres Seen tag clouds.
+
+2. Proposed Technical Stack and Hosting Solutions
+Frontend: SvelteKit on Cloudflare Workers (official adapter, free tier: 100k req/day, zero egress, commercial use allowed).
+Database + Auth: Neon PostgreSQL free tier (1GB/project, 100 CU-hours, autoscale-to-zero) with bundled Managed Better Auth (60k MAU, Google/Facebook OAuth, magic link, email/password).
+API Server: Node.js + Fastify on Oracle Cloud ARM Always Free (2 OCPU, 12GB RAM, always-on, no DB installed). Handles external API proxying, rate limiting, caching, Android sync.
+Media: Cloudflare R2 (10GB free, zero egress) with presigned uploads; Cloudinary or ImageKit optional/additional storage. Probably we have to use all three and even add more free providers later.
+Bot Protection: Cloudflare Turnstile (free, unlimited).
+Android: Kotlin + Room, syncs via Fastify API (never direct DB access).
+External APIs: MusicBrainz (1 req/sec, User-Agent required), Setlist.fm (2 req/sec, 1440/day), Discogs (60/min). Enforce global queue + TTL cache (artist metadata 7d, search 24h).
+
+* Media Storage Strategy: Image metadata stored in PostgreSQL while raw assets are offloaded to Cloudflare R2, Cloudinary or ImageKit free tiers . Uploads are restricted by strict client-side compression (converting photos to lightweight 1080p JPEGs) and enforced per-user quota caps (e.g., max 10 photos per event).
+
+3. Full Feature List and Design Decisions
+
+3.1 Account Creation and Authentication
+
+* Supported Login Providers: Google Sign-In, Facebook Login, and Email/Passwordless via Magic Link.
+* Registration Bot Defense: Registration forms enforce Cloudflare Turnstile verification to prevent automated script account creation.
+* Canonical Email Normalization: To prevent user abuse via sub-addressing (e.g., user+tag@gmail.com) or variable dot placement, all incoming email strings are canonicalized upon registration. The server strips all +tag aliases, removes periods for Gmail domains, and converts characters to lowercase prior to persisting the unique user entity. Accounts are bound to immutable OAuth provider IDs where applicable.
+
+3.2 Concert and Festival Logging Engine
+
+* Flexible Free-Text Input: Users can type any string for artists, venues, and locations. Background API queries fetch suggestions, but users can bypass all hints and log custom text.
+* Festival Inheritance Context: Creating a multi-day festival defines a parent event structure containing shared venue, city, and country details. Child show logs automatically inherit these location attributes without repeated entry.
+* Date Sequence Selector: Multi-day festival logs present a scrollable date sequence starting from the event's start date for rapid multi-day show tagging.
+* Multi-Band and Headliner Support: Multiple bands can be assigned to a single concert or festival day. Each entry includes an optional Headliner checkbox, which highlights designated acts on day summary cards and timeline overviews.
+* Log Metadata Fields: Event Date (Required), Band Names (Required, multi-select with Headliner toggle), Venue (Required for standalone shows, auto-inherited for festivals), City/Country (Optional), Personal Rating (1 to 5 stars, Optional), and Personal Notes/Memories (Optional).
+* Event Privacy Settings: Individual event entries default to Public visibility upon creation. Users can adjust their default preference or edit individual events to Public, Friends Only, or Private.
+
+3.3 Band Identification and Relational Metadata System
+
+* State Machine: Band entities exist in two states: Unidentified and Identified.
+* Unidentified State: Created automatically when a user saves a band using free-text input. Displays personal user stats (show count, first seen, last seen, full chronological show history) but leaves the extended metadata zone empty. Displays a prominent Identify Band button.
+* Identify Band UX Flow: Clicking Identify Band opens a search modal querying external APIs (MusicBrainz, Setlist.fm) alongside the local database. Selecting a suggested candidate triggers a Live Preview Card displaying the candidate's canonical name, band logo, country of origin, active years, and primary genres.
+* Confirmation Guardrail: The preview card requires an explicit user action: clicking Confirm to bind the MusicBrainz ID (MBID) and update the local record, clicking Cancel to discard the selection and retain the raw string, or clearing the input to re-type and query again.
+* Re-Identification and Name Collision Management: Users can edit or re-identify any band profile at any time to fix misclicks or decouple an MBID back to an Unidentified state. Bands with identical names (e.g., 1960s UK Nirvana vs. 1990s US Nirvana) are disambiguated by their unique MBIDs, preserving distinct logos, member lists, and statistics.
+* Relational Filter Engine: Verified metadata attributes become dynamic pivot filters across the user's personal memory database:
+* Origin/Nationality Filter: Clicking a nationality (e.g., United Kingdom) opens a view listing all other identified bands seen by the user from that country, along with total show counts.
+* Genre Filter: Clicking a genre tag (e.g., #Breakbeat) filters the personal vault to all bands classified under that style.
+* Activity Status Filter: Displays bands categorized as Active or Disbanded at the time of viewing.
+* Musician/Member Filter: Clicking a member's name shows every instance where the user saw that specific artist across different bands or side projects.
+
+3.4 Profile View Navigation Architecture
+The user profile page is modeled directly after Concert Archives and features 6 core tabs:
+
+* Overview Tab: Displays total summary stats (total concerts, unique bands, venues, countries), visual charts, top headliners seen, recent activity feed (respecting privacy permissions), user bio, avatar, and social action buttons.
+* Concerts Tab: Chronological feed of all shows attended by the user. Includes keyword search, sorting (newest/oldest), multi-day festival parent/child cards, headliner tags, ratings, and inline owner controls.
+* Bands Tab: Alphabetical or frequency-sorted list of all unique bands logged by the user with total times seen counts. Differentiates between Identified and Unidentified bands, rendering an inline Identify trigger for unlinked items.
+* Venues Tab: Aggregated list of all visited venues grouped by city and country, showing total visit counts per venue and linking directly to event history for each venue.
+* Locations Tab: Geographic aggregation of concerts structured by Country and City, integrating nationality pivot filters and showing total show/venue counts per region.
+* Years Tab: Chronological index grouped by calendar year with total shows per year, active year comparisons, and quick jump anchor links.
+
+3.5 Concert Detail Page Architecture
+Individual concert and festival pages are divided into clear global and personal sections:
+
+* Header Metadata and Privacy Bar: Lineup title formatted with headliner precedence, date/time, venue name, city, country, privacy indicator, edit controls, and a + Add to My Vault button for visitors.
+* Band Line-Up Section: The complete, authoritative roster of all artists scheduled or listed for the entire event/festival day.
+* Bands Seen Section: The personalized subset of the lineup that this specific user actually watched live. Users check off acts they saw. Personal metrics, show counts, and genre statistics calculate strictly from Bands Seen rather than the full unassisted lineup. Displays inline Identify buttons for any free-text unlinked bands.
+* Concert Details Card: Structured sidebar metadata including official event/tour name, date, door times, venue address, city, country, and parent festival links.
+* Genres Seen Section: Aggregated tag cloud of all musical styles associated with the specific Bands Seen. Rendered as clickable pill tags that act as relational filters across the user's profile.
+* Song-by-Song Setlists: Tracklists per band integrated via Setlist.fm API for identified acts, with custom edit capabilities for local shows.
+* Personal Journal and Memory Notes: 1 to 5 star performance rating, favorite heart toggle, and personal rich text notes detailing memories of the gig.
+* Media Gallery: Grid displaying user-uploaded crowd photos, stage shots, video clips, and scanned ticket stubs under client-side compression and account quota caps.
+* Community Attendance Feed: Avatar list of other platform users who logged attendance for the exact same event date and venue, highlighting mutual Friends and Followed accounts.
+
+3.6 Dual Social Model (Follows vs. Friends)
+
+* Follow System: One-way relationship requiring no approval. Following a user adds their public concert entries to the follower's timeline news feed.
+* Friend System: Two-way relationship requiring mutual consent (Friend Request sent -> Friend Request accepted). Friends automatically follow each other's activity feeds by default, with an option to unfollow while remaining friends.
+* Direct Messaging Access Control: Inbound PM permissions are user-configurable with three privacy modes: Anyone (Default), Friends Only, or Nobody.
+
+3.7 Anti-Abuse Moderation and Silent Suspension Engine
+
+* Silent Individual Block: Blocking a user immediately prevents incoming direct messages from that individual. The blocked party receives no notification of the block, and their sent messages drop silently without error indicators.
+* Active Block Calculation: Active blocks are tracked strictly as unique net relationships (Active Net Blocks = total distinct active users currently blocking the target account). Unblocking decrements the net count. Repeated block/unblock actions between the same two users only count as a single active block state.
+* Silent PM Suspension Trigger: Accumulating 25 net active blocks automatically triggers a silent suspension of the user's direct messaging capability.
+* Silent Suspension Experience: To the suspended user, the UI remains entirely normal; they can draft messages and click Send without error messages. On the server side, sent messages are silently dropped for non-friends.
+* Friend Exception Rule: A silently suspended user retains the ability to send direct messages to their confirmed mutual friends, provided the receiving friend has not individually blocked them (individual explicit blocks always take precedence).
+* Automated Admin Alert: Hitting the 25 net block threshold automatically generates a flag entry in the Web Admin Panel for review.
+
+3.8 Admin Panel and Support Access Engine
+
+* Analytics and Metrics Dashboard: Displays overall system metrics, including total active users, logged concerts, total active blocks across the system, and flagged accounts.
+* Audit and Moderation Logs: Dedicated view listing all users flagged at or above the 25 net block threshold, detailing individual block counts and offering administrative override toggles (Manual Ban / Unban / Clear Flags).
+* Admin Support Communication Logic: By default, all system accounts possess an automated system block preventing them from sending unsolicited direct messages to the Admin account.
+* Time-To-Live (TTL) Appeal Access: When a user requires support or wishes to appeal a suspension, an admin can issue a temporary communication permit with a Time-To-Live (TTL) duration (options: 1 hour, 1 day, 1 week, or permanent toggle).
+* Automatic Re-Lock: Upon expiration of the set TTL timer, the system automatically reinstates the messaging block against the admin, eliminating ongoing support spam and harassment loops.
+* Support Inbox: Includes an administrative request view where users can submit a single initial inquiry message to request an unblock, generating an admin notification and allowing the admin to set a TTL window for discussion.
+
+3.9 Data Enrichment and Management Documentation
+
+3.9.1. Overview of the Automated Enrichment Engine
+This document defines the automated band-data population and update mechanics for GigVault. The engine operates as a daily background pipeline that enriches the internal database using MusicBrainz for artist metadata and Setlist.fm for live activity data, without requiring users to manually trigger identification for every band. It also defines the administrative Management page that controls request budgets, manual band imports, and the data refresh lifecycle.
+The pipeline is built around three principles: strict API compliance, budget-aware scheduling (Setlist.fm's 1440 daily requests are the scarcest resource), and full administrative transparency (every quota, queue, and refresh action is visible and configurable).
+
+3.9.2. Trigger Flows
+3.9.2.1 User-Triggered Full Population
+When a user confirms a band identification from the suggestion modal and binds an MBID, the system immediately enqueues a full population task. Core artist metadata from MusicBrainz, including name, country, active years, genres, members, former members and links (Official web page, wikipedia, facebook page, spotify, twitter), is fetched immediately and written to the DB within seconds. Recent setlists and activity data from Setlist.fm, including last performance and recent tour, is enqueued asynchronously and never blocks the user. Data about full performance list (Date, Concert, Venue, Location) from MusicBrainz are low priority. The UI displays a "Data enrichment in progress" state; MusicBrainz data returns promptly while Setlist.fm data populates in the background, respecting the 2 req/sec rate limit.
+3.9.2.2 Nightly Automated Utilization
+Setlist.fm's daily quota resets at 00:00 UTC. The system reserves a configurable buffer for user-triggered real-time requests and utilizes the remainder overnight, starting at an administrator-defined time. The default configuration is to start at 22:00 local time and utilize 75% of the daily budget, reserving 25% for live user requests. The Management page displays the UTC offset explicitly to prevent timezone confusion.
+3.9.2.3 Periodic Refresh Cycle
+Bands are refreshed in ascending order of last_enriched_at, oldest first, with ties broken by log_count descending, so bands most frequently logged by users take precedence. Bands marked inactive (ended = true in MusicBrainz, with end_date more than one year past) are excluded from the daily refresh queue and handled by a separate monthly scan task that enqueues bands whose last_enriched_at exceeds 365 days.
+
+3.9.3. Management Page - "Data Enrichment Management"
+The administrative control surface is a single page titled Data Enrichment Management, organized top-to-bottom as follows.
+3.9.3.1 API Health and Quota Panel
+Displays MusicBrainz current request interval, today's request count, and last error. Displays Setlist.fm today's usage as XXX / 1440, remaining YYY, and next reset time (UTC converted to local). Displays queue status: pending bands, in-progress, completed today, failed today.
+3.9.3.2 MusicBrainz Settings
+MusicBrainz Request Interval: input field in milliseconds, default 1100, minimum 1000. Helper text: "Official rate limit is 1 req/sec; 1100ms provides safe headroom. 1 request per minute is compliant but unnecessarily slow."
+MusicBrainz User-Agent: read-only display of the configured User-Agent, for example GigVault/1.0 (admin@yourdomain.com), confirming compliance.
+3.9.3.3 Setlist.fm Budget Settings
+Setlist.fm Nightly Utilization Start: time selector, displayed with explicit UTC offset hint.
+Setlist.fm Daily Budget Utilization Cap: slider 50% to 90%, default 75%. Helper text: "Reserve at least 25% for user-triggered real-time requests."
+Current Day Usage: XXX / 1440 progress bar.
+Estimated Completion: projected band count processable tonight based on current queue length and utilization cap.
+3.9.3.4 Manual Band Import
+Administrators paste a human-readable list, one band per line, in the format Band Name (Year). Example lines: The Beatles (1960), The Rolling Stones (1962), Led Zeppelin (1968), Pink Floyd (1965), Queen (1970), The Who (1964), AC/DC (1973), Nirvana (1987), Black Sabbath (1968), Metallica (1981).
+Parsing rules: the last pair of parentheses is interpreted as the year; the remainder is the band name. Year is optional. Same-name bands such as Nirvana (1967) versus Nirvana (1987) are distinguished by querying MusicBrainz with name and year and presenting candidates for manual selection.
+Flow: first, click "Parse & Preview List" to render a preview table with columns Original Entry, Parsed Band Name, Parsed Year, Matched MusicBrainz Candidate, and Action (Confirm / Skip / Manual Select). Ambiguous matches display a dropdown of MusicBrainz candidates. Then click "Queue All Confirmed" to batch-enqueue all confirmed entries.
+3.9.3.5 Update Queue Controls
+Minimum Refresh Interval: dropdown with options 1 day, 3 days, 1 week (default), 2 weeks, 1 month.
+"Force Refresh All Bands" button, paired with an "Include inactive/ended bands" checkbox. Displays a queue-size estimate, for example "This will enqueue ~12,400 bands, including 3,200 inactive", and an estimated completion time.
+"Enqueue Inactive Bands Only" button: independent action that does not affect the active-band queue.
+Current Queue table: Band Name, MBID Status, Last Updated, Priority, Action (Skip / Force Now).
+3.9.3.6 Recent Activity Log
+Last 50 enrichment operations: timestamp, band, source (MusicBrainz or Setlist.fm), result (success / fail / partial), duration.
+
+3.9.4. Scheduling, Fault Tolerance, and Compliance
+Execution window: nightly, starting at the configured Setlist.fm utilization start time.
+Queue persistence: the band queue is stored in PostgreSQL; interrupted tasks resume from the last checkpoint without re-consuming API budget.
+Rate limiting: a global token-bucket or delay queue in Fastify enforces MusicBrainz spacing of at least 1100ms and Setlist.fm spacing of at least 600ms, with a daily counter that halts Setlist.fm calls at 1440.
+Monitoring: daily logs of API consumption and enrichment success rates; alert when remaining Setlist.fm quota falls below 300.
+Compliance note: MusicBrainz requires a meaningful User-Agent and prohibits polling for metadata changes. The refresh cycle uses periodic full refresh rather than frequent polling, satisfying this constraint.
+
+Notes for planning by priority:
+1. Nice modern logging system with different logging levels and filters. All feature development should consider this logging systme and to use it with coresponding tags.
+2. Notification system to alert the user for any issues or major events.
+3. App update system that should check current vs available on github version and to suggest an update via notification system. The app is hosted on Oracle server. Two locations related to the app: 
+Local repository checkout directory: /home/ubuntu/projects/party-tracker
+App working directory: /opt/party-tracker
+Suggested schema for update:
+3.1 Delete local files
+3.2 Clone the repo to local files
+3.3 Update with overwrite over the working directory
+You can suggest other update methods based on best practices.
+4. The app is a secondary goal. It should be developed after the Web app is completley done. But the development should consider that the app will exists.
+5. Possible features that are not on focus right now:
+5.1. People recommendation, surface "bands seen in common" and "venues visited" as discovery hooks.
+5.2. Ticket purchasing, resale, or event discovery.
+5.3. Algorithmic recommendations or "concerts near you" push notifications.
+5.4. Monetization via ads, data sales, or premium tiers.
+5.5. Public community forums, groups, or public comments
+
+## Out-of-Scope Items
+- **No iOS app** — Android only for mobile companion (PWA for web mobile).
+- **No real-time chat** — DMs are asynchronous message threads.
+- **No video uploads** — photos only (max 10/event, 1080p JPEG).
+- **No multi-language support** — English only for MVP.
+- **No data export/import (CSV, JSON, iCal)** — deferred to post-MVP.
