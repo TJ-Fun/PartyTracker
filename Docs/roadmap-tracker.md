@@ -6,7 +6,7 @@
 
 ## 1. How to Use This Tracker
 
-Update this file whenever a stage or release changes state.
+Update this file whenever a stage changes state. Use dedicated stage tracker files for release-level progress.
 
 ### Status values
 
@@ -21,7 +21,7 @@ Update this file whenever a stage or release changes state.
 ### Update rules
 
 1. Update the stage status table when a stage starts, blocks, or completes.
-2. Add release rows when a stage is split into releases.
+2. Track release-level progress in dedicated stage tracker files, such as `Docs/stage-1-tracker.md`.
 3. Add a progress log entry for meaningful updates.
 4. Record blockers and decisions in their dedicated sections.
 5. Keep entries short and factual.
@@ -32,16 +32,16 @@ Update this file whenever a stage or release changes state.
 |---|---|
 | Overall status | Not started |
 | Current stage | Stage 1 — Foundation & Platform Architecture |
-| Current focus | Roadmap documentation created; implementation has not started |
+| Current focus | Stage 1 release plan created; implementation has not started |
 | Active release | None |
 | Blockers | None |
-| Next action | Split Stage 1 into releases and begin repository scaffolding |
+| Next action | Begin Stage 1 Release 1 — Repository scaffold and tooling |
 
 ## 3. Stage Status
 
 | Stage | Name | Status | Owner | Started | Completed | Notes |
 |---|---|---|---|---|---|---|
-| 1 | Foundation & Platform Architecture | Not started | Unassigned | — | — | Establish deployable web/API, DB migrations, logging, notifications |
+| 1 | Foundation & Platform Architecture | Planned | Unassigned | — | — | Release plan: `Docs/stage-1-release-plan.md`; tracker: `Docs/stage-1-tracker.md` |
 | 2 | Identity, Profiles & Privacy | Not started | Unassigned | — | — | Auth providers, profiles, sessions, privacy controls |
 | 3 | Event Logging MVP | Not started | Unassigned | — | — | Standalone/festival logging, bands, venue, rating, notes, privacy |
 | 4 | Personal Profile & Memory Navigation | Not started | Unassigned | — | — | Six profile tabs and privacy-aware archive views |
@@ -52,22 +52,20 @@ Update this file whenever a stage or release changes state.
 | 9 | Enrichment, Notifications & Web Launch Polish | Not started | Unassigned | — | — | Enrichment pipeline, notifications, update checker, web hardening |
 | 10 | Android Companion & Ecosystem Hardening | Not started | Unassigned | — | — | Kotlin/Room app, auth, sync, offline support, release build |
 
-## 4. Release Tracker
+## 4. Stage Trackers
 
-Add one row per release after a stage is split. Use `TBD` until release scope is defined.
-
-| Stage | Release | Scope | Status | Owner | Started | Completed | Notes |
-|---|---|---|---|---|---|---|---|
-| 1 | TBD | To be split | Not started | Unassigned | — | — | Foundation stage releases not yet defined |
-| 2 | TBD | To be split | Not started | Unassigned | — | — | Identity stage releases not yet defined |
-| 3 | TBD | To be split | Not started | Unassigned | — | — | Event logging releases not yet defined |
-| 4 | TBD | To be split | Not started | Unassigned | — | — | Profile/navigation releases not yet defined |
-| 5 | TBD | To be split | Not started | Unassigned | — | — | Band identification releases not yet defined |
-| 6 | TBD | To be split | Not started | Unassigned | — | — | Concert detail/media releases not yet defined |
-| 7 | TBD | To be split | Not started | Unassigned | — | — | Social/messaging releases not yet defined |
-| 8 | TBD | To be split | Not started | Unassigned | — | — | Moderation/admin releases not yet defined |
-| 9 | TBD | To be split | Not started | Unassigned | — | — | Enrichment/notifications releases not yet defined |
-| 10 | TBD | To be split | Not started | Unassigned | — | — | Android releases not yet defined |
+| Stage | Release Plan | Tracker | Status |
+|---|---|---|---|
+| 1 | `Docs/stage-1-release-plan.md` | `Docs/stage-1-tracker.md` | Planned |
+| 2 | TBD | TBD | Not started |
+| 3 | TBD | TBD | Not started |
+| 4 | TBD | TBD | Not started |
+| 5 | TBD | TBD | Not started |
+| 6 | TBD | TBD | Not started |
+| 7 | TBD | TBD | Not started |
+| 8 | TBD | TBD | Not started |
+| 9 | TBD | TBD | Not started |
+| 10 | TBD | TBD | Not started |
 
 ## 5. Stage Gate Checklist
 
@@ -104,3 +102,4 @@ Use this checklist before marking a stage complete.
 | Date | Stage/Release | Update | Status | Next Action |
 |---|---|---|---|---|
 | 2026-11-22 | Roadmap | Created `Docs/Roadmap.md` and `Docs/roadmap-tracker.md` | Complete | Split Stage 1 into releases |
+| 2026-11-22 | Stage 1 | Created `Docs/stage-1-release-plan.md` and `Docs/stage-1-tracker.md`; replaced global release tracker with stage tracker index | Complete | Begin Stage 1 Release 1 |
