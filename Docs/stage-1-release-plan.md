@@ -25,7 +25,7 @@ This release plan splits Stage 1 into independently deliverable releases. It def
 
 | Release | Name | Objective | Depends On | Status |
 |---|---|---|---|---|
-| 1.1 | Repository Scaffold & Tooling Baseline | Create a clean monorepo with consistent tooling | — | Not started |
+| 1.1 | Repository Scaffold & Tooling Baseline | Create a clean monorepo with consistent tooling | — | Planned |
 | 1.2 | Configuration & Secrets Management | Establish environment config and secrets handling | 1.1 | Not started |
 | 1.3 | Web App Foundation | Create the SvelteKit + Cloudflare Workers app shell | 1.1, 1.2 | Not started |
 | 1.4 | API Server Foundation | Create the Fastify API shell with health checks | 1.1, 1.2 | Not started |
@@ -74,7 +74,7 @@ Logging should follow web/API foundations. Notification primitives should follow
 - Lint, format, typecheck, and test commands run successfully.
 - Web, API, and shared package boundaries are clear.
 
-**Status:** Not started
+**Status:** Planned — see `ToDo/20261122_185701_plan_stage-1-release-1.1-repository-scaffold.md`
 
 ---
 

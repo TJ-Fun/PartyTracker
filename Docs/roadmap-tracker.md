@@ -32,16 +32,16 @@ Update this file whenever a stage changes state. Use dedicated stage tracker fil
 |---|---|
 | Overall status | Not started |
 | Current stage | Stage 1 — Foundation & Platform Architecture |
-| Current focus | Stage 1 release plan created; implementation has not started |
-| Active release | None |
+| Current focus | Stage 1 Release 1.1 plan generated; implementation has not started |
+| Active release | 1.1 — Repository Scaffold & Tooling Baseline (planned) |
 | Blockers | None |
-| Next action | Begin Stage 1 Release 1 — Repository scaffold and tooling |
+| Next action | Review Release 1.1 plan and issue Go |
 
 ## 3. Stage Status
 
 | Stage | Name | Status | Owner | Started | Completed | Notes |
 |---|---|---|---|---|---|---|
-| 1 | Foundation & Platform Architecture | Planned | Unassigned | — | — | Release plan: `Docs/stage-1-release-plan.md`; tracker: `Docs/stage-1-tracker.md` |
+| 1 | Foundation & Platform Architecture | Planned | Unassigned | — | — | Release plan: `Docs/stage-1-release-plan.md`; tracker: `Docs/stage-1-tracker.md`; Release 1.1 plan: `ToDo/20261122_185701_plan_stage-1-release-1.1-repository-scaffold.md` |
 | 2 | Identity, Profiles & Privacy | Not started | Unassigned | — | — | Auth providers, profiles, sessions, privacy controls |
 | 3 | Event Logging MVP | Not started | Unassigned | — | — | Standalone/festival logging, bands, venue, rating, notes, privacy |
 | 4 | Personal Profile & Memory Navigation | Not started | Unassigned | — | — | Six profile tabs and privacy-aware archive views |
@@ -103,3 +103,4 @@ Use this checklist before marking a stage complete.
 |---|---|---|---|---|
 | 2026-11-22 | Roadmap | Created `Docs/Roadmap.md` and `Docs/roadmap-tracker.md` | Complete | Split Stage 1 into releases |
 | 2026-11-22 | Stage 1 | Created `Docs/stage-1-release-plan.md` and `Docs/stage-1-tracker.md`; replaced global release tracker with stage tracker index | Complete | Begin Stage 1 Release 1 |
+| 2026-11-22 | Stage 1 / Release 1.1 | Generated `ToDo/20261122_185701_plan_stage-1-release-1.1-repository-scaffold.md` | Planned | Review plan and issue Go |

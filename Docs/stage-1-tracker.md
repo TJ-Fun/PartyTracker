@@ -32,16 +32,16 @@ Track release-level progress for Stage 1 here. Task-level breakdowns are intenti
 | Field | Value |
 |---|---|
 | Stage status | Planned |
-| Active release | None |
-| Current focus | Release plan created; implementation has not started |
+| Active release | 1.1 — Repository Scaffold & Tooling Baseline |
+| Current focus | Release 1.1 implementation plan generated; awaiting execution approval |
 | Blockers | None |
-| Next action | Begin Release 1.1 — Repository Scaffold & Tooling Baseline |
+| Next action | Review `ToDo/20261122_185701_plan_stage-1-release-1.1-repository-scaffold.md` and issue Go |
 
 ## 3. Release Status
 
 | Release | Name | Status | Owner | Started | Completed | Notes |
 |---|---|---|---|---|---|---|
-| 1.1 | Repository Scaffold & Tooling Baseline | Not started | Unassigned | — | — | First release |
+| 1.1 | Repository Scaffold & Tooling Baseline | Planned | Unassigned | — | — | Plan: `ToDo/20261122_185701_plan_stage-1-release-1.1-repository-scaffold.md` |
 | 1.2 | Configuration & Secrets Management | Not started | Unassigned | — | — | Depends on 1.1 |
 | 1.3 | Web App Foundation | Not started | Unassigned | — | — | Depends on 1.1, 1.2 |
 | 1.4 | API Server Foundation | Not started | Unassigned | — | — | Depends on 1.1, 1.2 |
@@ -96,3 +96,4 @@ Tasks are not planned yet. When a release starts, add a task table here using th
 | Date | Release | Update | Status | Next Action |
 |---|---|---|---|---|
 | 2026-11-22 | Stage 1 | Created release plan and dedicated tracker | Complete | Begin Release 1.1 |
+| 2026-11-22 | 1.1 | Generated implementation plan for Repository Scaffold & Tooling Baseline | Planned | Review plan and issue Go |
